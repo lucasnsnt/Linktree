@@ -28,8 +28,8 @@ const links = [
 ];
 
 const container = {
-  hidden: { opacity: 0 },
-  show: { opacity: 1, transition: { staggerChildren: 0.1, delayChildren: 0.3 } },
+  hidden: {},
+  show: { transition: { staggerChildren: 0.12, delayChildren: 0.2 } },
 };
 
 const item = {
@@ -49,27 +49,58 @@ const Index = () => {
       >
         {/* Avatar */}
         <motion.div variants={item} className="mt-8">
-          <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-border shadow-lg">
+          <div className="w-36 h-36 rounded-full overflow-hidden border-[2.5px] border-foreground">
             <img
               src={avatarImg}
               alt="Lucas Santos"
-              width={96}
-              height={96}
-              className="w-full h-full object-cover"
+              width={144}
+              height={144}
+              className="w-full h-full object-cover object-center scale-110"
             />
           </div>
         </motion.div>
 
-        {/* Name & Bio */}
-        <motion.div variants={item} className="text-center space-y-2">
-          <h1 className="text-2xl font-bold text-foreground tracking-tight">
-            lucasnsnt
-          </h1>
-          <p className="text-muted-foreground text-sm max-w-md leading-relaxed">
-            Desenvolvedor web com experiência em Java, Spring Boot, React, Node.js,
-            JavaScript, MySQL. Criação de sistemas web.
+        {/* Name Hero Block — echo + warp SVG + reveal animation */}
+        <div className="lt-hero w-full">
+          {/* SVG warp filter — liquid turbulence distortion */}
+          <svg className="lt-filters" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <filter id="lt-warp" x="-5%" y="-5%" width="110%" height="110%">
+                <feTurbulence
+                  type="turbulence"
+                  baseFrequency="0.012 0.018"
+                  numOctaves="3"
+                  seed="4"
+                  result="noise"
+                />
+                <feDisplacementMap
+                  in="SourceGraphic"
+                  in2="noise"
+                  scale="10"
+                  xChannelSelector="R"
+                  yChannelSelector="G"
+                />
+              </filter>
+            </defs>
+          </svg>
+
+          {/* Background cursive echo — começa visível, encolhe e some */}
+          <div className="lt-echo" aria-hidden="true">
+            <span className="lt-echo-text">web developer</span>
+          </div>
+
+          {/* Nome principal — surge enquanto o echo some */}
+          <div className="lt-name-block">
+            <h1 className="lt-name-line">Lucas Santos</h1>
+          </div>
+        </div>
+
+        {/* Tagline — aparece por último */}
+        <div className="text-center">
+          <p className="lt-tagline">
+            Desenvolvedor web com experiência em Java, Spring Boot, React, Node.js, JavaScript, MySQL. sistemas web.
           </p>
-        </motion.div>
+        </div>
 
         {/* Social Icon */}
         <motion.div variants={item}>
@@ -77,7 +108,7 @@ const Index = () => {
             href="https://www.instagram.com/lucasnsnt"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-foreground hover:text-muted-foreground transition-colors"
+            className="text-foreground hover:text-accent transition-colors"
             aria-label="Instagram"
           >
             <Instagram className="w-6 h-6" />
@@ -93,9 +124,10 @@ const Index = () => {
               target="_blank"
               rel="noopener noreferrer"
               variants={item}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className="flex items-center gap-4 w-full bg-link text-link-foreground rounded-xl px-5 py-4 transition-colors hover:bg-link-hover group"
+              whileHover={{ x: -5, y: -5 }}
+              whileTap={{ x: 0, y: 0 }}
+              transition={{ type: "spring", stiffness: 400, damping: 25 }}
+              className="brutalist-link flex items-center gap-4 w-full bg-link text-link-foreground px-5 py-4 group"
             >
               <span className="shrink-0">{link.icon}</span>
               <span className="flex-1 text-center font-medium text-sm pr-5">
@@ -114,19 +146,7 @@ const Index = () => {
         transition={{ delay: 1 }}
         className="mt-12 pb-4 flex flex-col items-center gap-3"
       >
-        <div className="flex items-center gap-4 text-xs text-footer-foreground">
-          <a href="#" className="hover:text-foreground transition-colors">
-            Cookie Preferences
-          </a>
-          <span>•</span>
-          <a href="#" className="hover:text-foreground transition-colors">
-            Report
-          </a>
-          <span>•</span>
-          <a href="#" className="hover:text-foreground transition-colors">
-            Privacy
-          </a>
-        </div>
+        
         <p className="text-[11px] text-footer-foreground">
           © {new Date().getFullYear()} lucasnsnt
         </p>

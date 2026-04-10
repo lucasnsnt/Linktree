@@ -1,3 +1,6 @@
+@import url('https://fonts.googleapis.com/css2?family=BBH+Sans+Bogle&family=Open+Sans:ital,wdth,wght@0,75..100,300..800;1,75..100,300..800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Pinyon+Script&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -8,41 +11,42 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 0 0% 92%;
-    --foreground: 0 0% 10%;
+    /* Paleta brutalista — espelhando o Portfolio */
+    --background: 36 16% 94%;       /* #f2f0ed creme */
+    --foreground: 0 0% 7%;          /* #111 quase-preto */
 
-    --card: 0 0% 28%;
-    --card-foreground: 0 0% 95%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 7%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 10%;
+    --popover-foreground: 0 0% 7%;
 
-    --primary: 0 0% 20%;
+    --primary: 0 0% 7%;
     --primary-foreground: 0 0% 98%;
 
-    --secondary: 0 0% 85%;
-    --secondary-foreground: 0 0% 10%;
+    --secondary: 36 16% 88%;
+    --secondary-foreground: 0 0% 7%;
 
-    --muted: 0 0% 90%;
-    --muted-foreground: 0 0% 45%;
+    --muted: 36 10% 88%;
+    --muted-foreground: 0 0% 33%;   /* #555 */
 
-    --accent: 0 0% 96%;
-    --accent-foreground: 0 0% 10%;
+    --accent: 350 86% 42%;          /* #C8102E vermelho */
+    --accent-foreground: 0 0% 98%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 0 0% 80%;
-    --input: 0 0% 80%;
-    --ring: 0 0% 20%;
+    --border: 0 0% 7%;              /* borda preta forte */
+    --input: 0 0% 7%;
+    --ring: 350 86% 42%;
 
-    --radius: 1.5rem;
+    --radius: 0rem;                 /* sem arredondamento — brutalista */
 
-    --link-bg: 0 0% 35%;
-    --link-bg-hover: 0 0% 42%;
-    --link-foreground: 0 0% 98%;
+    --link-bg: 0 0% 100%;           /* cards brancos */
+    --link-bg-hover: 0 0% 100%;
+    --link-foreground: 0 0% 7%;     /* texto escuro nos cards */
 
-    --footer-foreground: 0 0% 50%;
+    --footer-foreground: 0 0% 35%;
   }
 
   .dark {
@@ -91,5 +95,220 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+    font-family: 'Open Sans', Arial, Helvetica, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* ===================================
+   Brutalismo — estilos extras
+   =================================== */
+
+::selection {
+  background-color: #C8102E;
+  color: #fff;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f2f0ed;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #111111;
+  border-radius: 0;
+}
+
+/* Card de link brutalista */
+.brutalist-link {
+  border: 2.5px solid #111111;
+  transition:
+    box-shadow 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    border-color 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.brutalist-link:hover {
+  box-shadow: 6px 6px 0px #C8102E;
+  border-color: #C8102E;
+}
+
+/* Tipografia — título principal */
+.link-heading {
+  font-family: 'BBH Sans Bogle', 'Arial Black', Arial, sans-serif;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+}
+
+/* Linha decorativa sob o nome — sotaque vermelho */
+.link-heading-accent {
+  display: inline-block;
+  position: relative;
+}
+
+.link-heading-accent::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 100%;
+  height: 2.5px;
+  background-color: #C8102E;
+}
+
+/* Footer links hover */
+.footer-link {
+  color: hsl(var(--footer-foreground));
+  text-decoration: none;
+  position: relative;
+  transition: color 0.2s ease;
+}
+
+.footer-link::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 0;
+  height: 1.5px;
+  background-color: #C8102E;
+  transition: width 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.footer-link:hover {
+  color: #111111;
+}
+
+.footer-link:hover::after {
+  width: 100%;
+}
+
+/* ===================================
+   Linkthree Hero — espelho do efeito Portfolio
+   =================================== */
+
+/* Contêiner do bloco hero do nome */
+.lt-hero {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  overflow: hidden;
+  padding: 1rem 0 0.5rem;
+  isolation: isolate;
+}
+
+/* SVG filter oculto */
+.lt-filters {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* ===================================================
+   Echo — "web developer" cursivo no fundo
+   Começa grande e quase opaco, encolhe e some
+   =================================================== */
+.lt-echo {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  white-space: nowrap;
+  mix-blend-mode: multiply;
+  pointer-events: none;
+  user-select: none;
+  z-index: 1;
+  animation: ltEchoReveal 3.6s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+}
+
+.lt-echo-text {
+  font-family: 'Pinyon Script', cursive;
+  font-size: clamp(2.8rem, 10vw, 5.5rem);
+  color: #1A1A1A;
+  letter-spacing: 0.02em;
+  line-height: 1;
+}
+
+@keyframes ltEchoReveal {
+  0% {
+    opacity: 0.8;
+    transform: translate(-50%, -50%) rotate(-4deg) scale(1.05);
+  }
+  100% {
+    opacity: 0.1;
+    transform: translate(-50%, -52%) rotate(-4deg) scale(0.78);
+  }
+}
+
+/* ===================================================
+   Nome principal — surge enquanto o echo some
+   Warp SVG + blur + translateY → reveal
+   =================================================== */
+.lt-name-block {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  line-height: 0.88;
+}
+
+.lt-name-line {
+  font-family: 'BBH Sans Bogle', 'Impact', 'Arial Black', sans-serif;
+  font-weight: 900;
+  font-size: clamp(3rem, 13vw, 5.5rem);
+  color: #111111;
+  text-transform: uppercase;
+  letter-spacing: clamp(-0.06em, -0.4vw, -0.02em);
+  display: block;
+  filter: url(#lt-warp);
+  opacity: 0;
+  animation: ltNameReveal 1.4s cubic-bezier(0.16, 1, 0.3, 1) 0.8s forwards;
+}
+
+@keyframes ltNameReveal {
+  0% {
+    opacity: 0;
+    transform: translateY(24px);
+    filter: url(#lt-warp) blur(6px);
+  }
+  60% {
+    filter: url(#lt-warp) blur(1px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+    filter: url(#lt-warp) blur(0);
+  }
+}
+
+/* ===================================================
+   Tagline — aparece por último, após o nome
+   =================================================== */
+.lt-tagline {
+  font-size: clamp(0.7rem, 1.8vw, 0.82rem);
+  color: #555;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  opacity: 0;
+  animation: ltTaglineReveal 1.2s cubic-bezier(0.16, 1, 0.3, 1) 2.4s forwards;
+  line-height: 1.7;
+  max-width: 340px;
+  margin: 0 auto;
+}
+
+@keyframes ltTaglineReveal {
+  0% {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
