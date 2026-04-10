@@ -12,7 +12,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "predeploy": "npm run build",
-    "deploy": "GITHUB_PAGES=true gh-pages -d dist"
+    "deploy": "set GITHUB_PAGES=true && gh-pages -d dist"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
