@@ -55,7 +55,7 @@ const Index = () => {
               alt="Lucas Santos"
               width={144}
               height={144}
-              className="w-full h-full object-cover object-center scale-110"
+              className="w-full h-full object-cover object-center"
             />
           </div>
         </motion.div>

@@ -231,7 +231,6 @@ All colors MUST be HSL.
 .lt-echo-text {
   font-family: 'Pinyon Script', cursive;
   font-size: clamp(2.8rem, 10vw, 5.5rem);
-  color: #1A1A1A;
   letter-spacing: 0.02em;
   line-height: 1;
 }
@@ -296,7 +295,7 @@ All colors MUST be HSL.
   letter-spacing: 0.18em;
   text-transform: uppercase;
   opacity: 0;
-  animation: ltTaglineReveal 1.2s cubic-bezier(0.16, 1, 0.3, 1) 2.4s forwards;
+  animation: ltTaglineReveal 1.2s cubic-bezier(0.16, 1, 0.3, 1) 1.2s forwards;
   line-height: 1.7;
   max-width: 340px;
   margin: 0 auto;
@@ -311,4 +310,13 @@ All colors MUST be HSL.
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+.avatar-img {
+  display: flex;
+  margin-left: auto;
+  margin-right: auto;
+
+  max-width: 100%;
+  height: auto;
 }
