@@ -2,7 +2,7 @@ name: Notificar IndexNow
 
 on:
   push:
-    branches: [ main ]  # O robô ativa quando você faz push na main
+    branches: [ main ]
 
 jobs:
   indexnow:
@@ -13,7 +13,7 @@ jobs:
           curl -X POST "https://api.indexnow.org/IndexNow" \
           -H "Content-Type: application/json; charset=utf-8" \
           -d '{
-            "host": "lucasnsnt.ink",
+            "host": "links.lucasnsnt.ink",
             "key": "nsnt-ink-123",
             "keyLocation": "https://links.lucasnsnt.ink/nsnt-ink-123.txt",
             "urlList": [
