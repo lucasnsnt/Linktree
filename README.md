@@ -1,4 +1,4 @@
-# Linktree de Lucas Santos (lucasnsnt)
+# Linktree
 
 Este projeto é um Linktree personalizado desenvolvido em React + Vite, com o objetivo de centralizar e direcionar visitantes para todas as minhas redes sociais, portfólio, GitHub, LinkedIn, Instagram e outros links relevantes.
 

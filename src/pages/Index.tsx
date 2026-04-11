@@ -148,7 +148,7 @@ const Index = () => {
       >
         
         <p className="text-[11px] text-footer-foreground">
-          © {new Date().getFullYear()} lucasnsnt
+          © {new Date().getFullYear()} Lucas Santos. Todos os direitos reservados.
         </p>
       </motion.footer>
     </div>
