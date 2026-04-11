@@ -131,9 +131,11 @@ All colors MUST be HSL.
     border-color 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
-.brutalist-link:hover {
-  box-shadow: 6px 6px 0px #C8102E;
-  border-color: #C8102E;
+@media (hover: hover) and (pointer: fine) {
+  .brutalist-link:hover {
+    box-shadow: 6px 6px 0px #C8102E;
+    border-color: #C8102E;
+  }
 }
 
 /* Tipografia — título principal */
@@ -179,12 +181,14 @@ All colors MUST be HSL.
   transition: width 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
-.footer-link:hover {
-  color: #111111;
-}
+@media (hover: hover) and (pointer: fine) {
+  .footer-link:hover {
+    color: #111111;
+  }
 
-.footer-link:hover::after {
-  width: 100%;
+  .footer-link:hover::after {
+    width: 100%;
+  }
 }
 
 /* ===================================
@@ -312,11 +316,4 @@ All colors MUST be HSL.
   }
 }
 
-.avatar-img {
-  display: flex;
-  margin-left: auto;
-  margin-right: auto;
 
-  max-width: 100%;
-  height: auto;
-}

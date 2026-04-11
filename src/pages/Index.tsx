@@ -1,10 +1,11 @@
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Instagram, Linkedin, Github, Globe, ExternalLink } from "lucide-react";
 import avatarImg from "@/assets/avatar.png";
 
 const links = [
   {
-    title: "Lucas Santos | Desenvolvedor Web | Portfólio",
+    title: "Portfólio | Lucas Santos - Dev",
     url: "http://lucasnsnt.ink/",
     icon: <Globe className="w-5 h-5" />,
     description: "Portfólio pessoal",
@@ -38,6 +39,18 @@ const item = {
 };
 
 const Index = () => {
+  const [canHover, setCanHover] = useState(false);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(hover: hover) and (pointer: fine)");
+    const updateCanHover = () => setCanHover(mediaQuery.matches);
+
+    updateCanHover();
+    mediaQuery.addEventListener("change", updateCanHover);
+
+    return () => mediaQuery.removeEventListener("change", updateCanHover);
+  }, []);
+
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-between px-4 py-8">
       {/* Main Content */}
@@ -55,7 +68,8 @@ const Index = () => {
               alt="Lucas Santos"
               width={144}
               height={144}
-              className="w-full h-full object-cover object-center"
+              draggable={false}
+              className="w-full h-full object-cover object-center pointer-events-none select-none"
             />
           </div>
         </motion.div>
@@ -108,7 +122,7 @@ const Index = () => {
             href="https://www.instagram.com/lucasnsnt"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-foreground hover:text-accent transition-colors"
+            className={`text-foreground transition-colors ${canHover ? "hover:text-accent" : ""}`}
             aria-label="Instagram"
           >
             <Instagram className="w-6 h-6" />
@@ -124,16 +138,16 @@ const Index = () => {
               target="_blank"
               rel="noopener noreferrer"
               variants={item}
-              whileHover={{ x: -5, y: -5 }}
+              whileHover={canHover ? { x: -5, y: -5 } : undefined}
               whileTap={{ x: 0, y: 0 }}
               transition={{ type: "spring", stiffness: 400, damping: 25 }}
-              className="brutalist-link flex items-center gap-4 w-full bg-link text-link-foreground px-5 py-4 group"
+              className={`brutalist-link flex items-center gap-4 w-full bg-link text-link-foreground px-5 py-4 ${canHover ? "group" : ""}`}
             >
               <span className="shrink-0">{link.icon}</span>
               <span className="flex-1 text-center font-medium text-sm pr-5">
                 {link.title}
               </span>
-              <ExternalLink className="w-4 h-4 opacity-0 group-hover:opacity-60 transition-opacity shrink-0" />
+              <ExternalLink className={`w-4 h-4 opacity-0 transition-opacity shrink-0 ${canHover ? "group-hover:opacity-60" : ""}`} />
             </motion.a>
           ))}
         </motion.div>
