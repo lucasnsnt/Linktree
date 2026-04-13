@@ -102,18 +102,18 @@ const Index = () => {
             </defs>
           </svg>
 
-          {/* Background cursive echo — começa visível, encolhe e some */}
+          
           <div className="lt-echo" aria-hidden="true">
             <span className="lt-echo-text">web developer</span>
           </div>
 
-          {/* Nome principal — surge enquanto o echo some */}
+          
           <div className="lt-name-block">
             <h1 className="lt-name-line">Lucas Santos</h1>
           </div>
         </div>
 
-        {/* Tagline — aparece por último */}
+        
         <div className="text-center">
           <p className="lt-tagline">
             Desenvolvedor web com experiência em Java, Spring Boot, React, Node.js, JavaScript, MySQL. sistemas web.

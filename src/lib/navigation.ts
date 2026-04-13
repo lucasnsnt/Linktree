@@ -23,10 +23,10 @@ export function normalizeLinkedInUrl(url: string): string {
   try {
     const parsed = new URL(url);
 
-    // Force HTTPS
+  
     parsed.protocol = "https:";
 
-    // Add cache-bust param to prevent WebView redirect caching
+    
     parsed.searchParams.set("_t", String(Date.now()));
 
     return parsed.toString();
@@ -46,16 +46,12 @@ export function openExternalLink({
   const finalUrl = isLinkedInUrl(url) ? normalizeLinkedInUrl(url) : url;
 
   if (isInAppBrowser()) {
-    // In-app browsers: avoid target="_blank" and window.open entirely.
-    // Use location.assign with a small delay to prevent WebView race conditions.
+    
     setTimeout(() => {
       window.location.assign(finalUrl);
     }, delay);
   } else {
-    // Standard browsers: open in new tab, fallback to assign
-    const newWindow = window.open(finalUrl, "_blank", "noopener,noreferrer");
-    if (!newWindow) {
-      window.location.assign(finalUrl);
-    }
+    
+    window.open(finalUrl, "_blank");
   }
 }
