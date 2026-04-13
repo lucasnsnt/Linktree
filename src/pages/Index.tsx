@@ -1,7 +1,11 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Instagram, Linkedin, Github, Globe, ExternalLink } from "lucide-react";
+import { Instagram, Linkedin, Github, Globe, ExternalLink as ExternalLinkIcon } from "lucide-react";
 import avatarImg from "@/assets/avatar.png";
+import { ExternalLink } from "@/components/ExternalLink";
+import { isInAppBrowser } from "@/lib/browser";
+
+const MotionExternalLink = motion.create(ExternalLink);
 
 const links = [
   {
@@ -116,27 +120,43 @@ const Index = () => {
           </p>
         </div>
 
+        {/* WebView Banner */}
+        {isInAppBrowser() && (
+          <motion.div
+            variants={item}
+            className="w-full bg-muted/60 border border-border px-4 py-2.5 text-center text-xs text-muted-foreground"
+          >
+            Para uma melhor experiência,{" "}
+            <button
+              type="button"
+              onClick={() => {
+                navigator.clipboard?.writeText(window.location.href);
+              }}
+              className="underline font-medium text-foreground"
+            >
+              copie o link
+            </button>{" "}
+            e abra no navegador.
+          </motion.div>
+        )}
+
         {/* Social Icon */}
         <motion.div variants={item}>
-          <a
-            href="https://www.instagram.com/lucasnsnt"
-            target="_blank"
-            rel="noopener noreferrer"
+          <ExternalLink
+            url="https://www.instagram.com/lucasnsnt"
             className={`text-foreground transition-colors ${canHover ? "hover:text-accent" : ""}`}
             aria-label="Instagram"
           >
             <Instagram className="w-6 h-6" />
-          </a>
+          </ExternalLink>
         </motion.div>
 
         {/* Links */}
         <motion.div variants={container} className="w-full space-y-3">
           {links.map((link) => (
-            <motion.a
+            <MotionExternalLink
               key={link.title}
-              href={link.url}
-              target="_blank"
-              rel="noopener noreferrer"
+              url={link.url}
               variants={item}
               whileHover={canHover ? { x: -5, y: -5 } : undefined}
               whileTap={{ x: 0, y: 0 }}
@@ -147,8 +167,8 @@ const Index = () => {
               <span className="flex-1 text-center font-medium text-sm pr-5">
                 {link.title}
               </span>
-              <ExternalLink className={`w-4 h-4 opacity-0 transition-opacity shrink-0 ${canHover ? "group-hover:opacity-60" : ""}`} />
-            </motion.a>
+              <ExternalLinkIcon className={`w-4 h-4 opacity-0 transition-opacity shrink-0 ${canHover ? "group-hover:opacity-60" : ""}`} />
+            </MotionExternalLink>
           ))}
         </motion.div>
       </motion.div>
