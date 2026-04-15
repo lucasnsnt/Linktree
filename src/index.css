@@ -300,6 +300,7 @@ All colors MUST be HSL.
   display: block;
   filter: url(#lt-warp);
   opacity: 0;
+  will-change: transform, opacity, filter;
   animation: ltNameReveal 1.4s cubic-bezier(0.16, 1, 0.3, 1) 0.8s forwards;
 }
 

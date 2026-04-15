@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Instagram, Linkedin, Github, Globe, ExternalLink as ExternalLinkIcon } from "lucide-react";
-import avatarImg from "@/assets/avatar.png";
+import avatarImg from "@/assets/avatar.webp";
 import { ExternalLink } from "@/components/ExternalLink";
 import { isInAppBrowser } from "@/lib/browser";
 
@@ -56,7 +56,7 @@ const Index = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-between px-4 py-8">
+    <main className="min-h-screen bg-background flex flex-col items-center justify-between px-4 py-8">
       {/* Main Content */}
       <motion.div
         className="w-full max-w-[680px] flex flex-col items-center gap-6 flex-1"
@@ -73,6 +73,8 @@ const Index = () => {
               width={144}
               height={144}
               draggable={false}
+              fetchPriority="high"
+              decoding="async"
               className="w-full h-full object-cover object-center pointer-events-none select-none"
             />
           </div>
@@ -133,6 +135,7 @@ const Index = () => {
                 navigator.clipboard?.writeText(window.location.href);
               }}
               className="underline font-medium text-foreground"
+              aria-label="Copiar link da página"
             >
               copie o link
             </button>{" "}
@@ -162,6 +165,7 @@ const Index = () => {
               whileTap={{ x: 0, y: 0 }}
               transition={{ type: "spring", stiffness: 400, damping: 25 }}
               className={`brutalist-link flex items-center gap-4 w-full bg-link text-link-foreground px-5 py-4 ${canHover ? "group" : ""}`}
+              aria-label={link.title}
             >
               <span className="shrink-0">{link.icon}</span>
               <span className="flex-1 text-center font-medium text-sm pr-5">
@@ -185,7 +189,7 @@ const Index = () => {
           © {new Date().getFullYear()} Lucas Santos. Todos os direitos reservados.
         </p>
       </motion.footer>
-    </div>
+    </main>
   );
 };
 
