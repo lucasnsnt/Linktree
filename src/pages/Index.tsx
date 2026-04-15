@@ -65,7 +65,12 @@ const Index = () => {
         animate="show"
       >
         {/* Avatar */}
-        <motion.div variants={item} className="mt-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="mt-8"
+        >
           <div className="w-36 h-36 rounded-full overflow-hidden border-[2.5px] border-foreground">
             <img
               src={avatarImg}

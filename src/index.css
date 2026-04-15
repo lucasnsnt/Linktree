@@ -288,6 +288,7 @@ All colors MUST be HSL.
   z-index: 2;
   text-align: center;
   line-height: 0.88;
+  filter: url(#lt-warp);
 }
 
 .lt-name-line {
@@ -298,9 +299,8 @@ All colors MUST be HSL.
   text-transform: uppercase;
   letter-spacing: clamp(-0.06em, -0.4vw, -0.02em);
   display: block;
-  filter: url(#lt-warp);
   opacity: 0;
-  will-change: transform, opacity, filter;
+  will-change: transform, opacity;
   animation: ltNameReveal 1.4s cubic-bezier(0.16, 1, 0.3, 1) 0.8s forwards;
 }
 
@@ -308,15 +308,10 @@ All colors MUST be HSL.
   0% {
     opacity: 0;
     transform: translateY(24px);
-    filter: url(#lt-warp) blur(6px);
-  }
-  60% {
-    filter: url(#lt-warp) blur(1px);
   }
   100% {
     opacity: 1;
     transform: translateY(0);
-    filter: url(#lt-warp) blur(0);
   }
 }
 
