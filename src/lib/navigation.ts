@@ -3,6 +3,7 @@ import { isInAppBrowser } from "./browser";
 export interface ExternalLinkOptions {
   url: string;
   delay?: number;
+  target?: string;
 }
 
 const DEFAULT_DELAY_MS = 80;
@@ -38,6 +39,7 @@ export function normalizeLinkedInUrl(url: string): string {
 export function openExternalLink({
   url,
   delay = DEFAULT_DELAY_MS,
+  target,
 }: ExternalLinkOptions): void {
   const now = Date.now();
   if (now - lastNavigationTime < DEBOUNCE_MS) return;
@@ -47,6 +49,10 @@ export function openExternalLink({
 
   if (isInAppBrowser()) {
     
+    setTimeout(() => {
+      window.location.assign(finalUrl);
+    }, delay);
+  } else if (target === "_self") {
     setTimeout(() => {
       window.location.assign(finalUrl);
     }, delay);

@@ -13,6 +13,7 @@ const links = [
     url: "http://lucasnsnt.ink/",
     icon: <Globe className="w-5 h-5" />,
     description: "Portfólio pessoal",
+    selfTarget: true,
   },
   {
     title: "LinkedIn",
@@ -171,12 +172,15 @@ const Index = () => {
               transition={{ type: "spring", stiffness: 400, damping: 25 }}
               className={`brutalist-link flex items-center gap-4 w-full bg-link text-link-foreground px-5 py-4 ${canHover ? "group" : ""}`}
               aria-label={link.title}
+              {...(link.selfTarget ? { target: "_self" } : {})}
             >
               <span className="shrink-0">{link.icon}</span>
               <span className="flex-1 text-center font-medium text-sm pr-5">
                 {link.title}
               </span>
-              <ExternalLinkIcon className={`w-4 h-4 opacity-0 transition-opacity shrink-0 ${canHover ? "group-hover:opacity-60" : ""}`} />
+              {!link.selfTarget && (
+                <ExternalLinkIcon className={`w-4 h-4 opacity-0 transition-opacity shrink-0 ${canHover ? "group-hover:opacity-60" : ""}`} />
+              )}
             </MotionExternalLink>
           ))}
         </motion.div>

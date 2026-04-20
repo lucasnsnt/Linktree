@@ -6,22 +6,25 @@ interface ExternalLinkProps
   extends Omit<AnchorHTMLAttributes<HTMLAnchorElement>, "href" | "target"> {
   url: string;
   delay?: number;
+  target?: string;
 }
 
 const ExternalLink = forwardRef<HTMLAnchorElement, ExternalLinkProps>(
-  ({ url, delay, children, onClick, ...props }, ref) => {
+  ({ url, delay, target, children, onClick, ...props }, ref) => {
     const { handleClick } = useExternalLink();
 
     const inApp = isInAppBrowser();
+    const resolvedTarget = target ?? (inApp ? undefined : "_blank");
+    const resolvedRel = resolvedTarget === "_blank" ? "noopener noreferrer" : undefined;
 
     return (
       <a
         ref={ref}
         href={url}
-        target={inApp ? undefined : "_blank"}
-        rel={inApp ? undefined : "noopener noreferrer"}
+        target={resolvedTarget}
+        rel={resolvedRel}
         onClick={(e) => {
-          handleClick(url, delay)(e);
+          handleClick(url, delay, resolvedTarget)(e);
           onClick?.(e);
         }}
         {...props}
