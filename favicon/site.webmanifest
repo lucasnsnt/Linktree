@@ -1,24 +1,21 @@
 {
-  "name": "lucasnsnt | Links",
-  "short_name": "lucasnsnt",
-  "description": "Todos os links de Lucas Santos — desenvolvedor web.",
-  "lang": "pt-BR",
-  "start_url": "/",
+  "name": "Portfolio | Lucas Santos",
+  "short_name": "Portfolio",
   "icons": [
     {
-      "src": "/favicon/web-app-manifest-192x192.png",
+      "src": "/web-app-manifest-192x192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "maskable"
     },
     {
-      "src": "/favicon/web-app-manifest-512x512.png",
+      "src": "/web-app-manifest-512x512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
     }
   ],
-  "theme_color": "#f2f0ed",
-  "background_color": "#f2f0ed",
+  "theme_color": "#ffffff",
+  "background_color": "#ffffff",
   "display": "standalone"
 }
