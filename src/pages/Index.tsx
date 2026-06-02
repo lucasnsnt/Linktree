@@ -1,11 +1,19 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Instagram, Linkedin, Github, Globe, ExternalLink as ExternalLinkIcon } from "lucide-react";
+import { Instagram, Linkedin, Github, Globe, ExternalLink as ExternalLinkIcon, MessageCircle, Music } from "lucide-react";
 import avatarImg from "@/assets/avatar.webp";
 import { ExternalLink } from "@/components/ExternalLink";
 import { isInAppBrowser } from "@/lib/browser";
+import { useGitHubActivity } from "@/hooks/useGitHubActivity";
 
 const MotionExternalLink = motion.create(ExternalLink);
+
+const whatsappLink = {
+  title: "WhatsApp Business",
+  subtitle: "Orçamentos e Projetos",
+  url: "https://wa.me/557998554805",
+  icon: <MessageCircle className="w-5 h-5" />,
+};
 
 const links = [
   {
@@ -31,6 +39,11 @@ const links = [
     icon: <Instagram className="w-5 h-5" />,
     featured: true,
   },
+  {
+    title: "Playlist para Programar",
+    url: "https://open.spotify.com/playlist/2N7iDJLgKrdWjIH5b0xCwX",
+    icon: <Music className="w-5 h-5" />,
+  },
 ];
 
 const container = {
@@ -45,6 +58,7 @@ const item = {
 
 const Index = () => {
   const [canHover, setCanHover] = useState(false);
+  const { lastActivityText } = useGitHubActivity();
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(hover: hover) and (pointer: fine)");
@@ -128,6 +142,18 @@ const Index = () => {
           </p>
         </div>
 
+        {/* Status Section */}
+        <motion.div variants={item} className="flex flex-col items-center gap-1 text-center">
+          <span className="text-sm text-muted-foreground">
+            🟢 Disponível para projetos
+          </span>
+          {lastActivityText && (
+            <span className="text-xs text-muted-foreground">
+              ⚡ Última atividade no GitHub: {lastActivityText}
+            </span>
+          )}
+        </motion.div>
+
         {/* WebView Banner */}
         {isInAppBrowser() && (
           <motion.div
@@ -159,6 +185,24 @@ const Index = () => {
             <Instagram className="w-6 h-6" />
           </ExternalLink>
         </motion.div>
+
+        {/* WhatsApp Business */}
+        <MotionExternalLink
+          url={whatsappLink.url}
+          variants={item}
+          whileHover={canHover ? { x: -5, y: -5 } : undefined}
+          whileTap={{ x: 0, y: 0 }}
+          transition={{ type: "spring", stiffness: 400, damping: 25 }}
+          className={`brutalist-link flex items-center gap-4 w-full bg-link text-link-foreground px-5 py-4 ${canHover ? "group" : ""}`}
+          aria-label={whatsappLink.title}
+        >
+          <span className="shrink-0">{whatsappLink.icon}</span>
+          <span className="flex-1 text-center pr-5">
+            <span className="block font-medium text-sm">{whatsappLink.title}</span>
+            <span className="block text-xs opacity-70 font-normal">{whatsappLink.subtitle}</span>
+          </span>
+          <ExternalLinkIcon className={`w-4 h-4 opacity-0 transition-opacity shrink-0 ${canHover ? "group-hover:opacity-60" : ""}`} />
+        </MotionExternalLink>
 
         {/* Links */}
         <motion.div variants={container} className="w-full space-y-3">
