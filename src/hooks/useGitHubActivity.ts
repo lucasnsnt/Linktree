@@ -1,13 +1,11 @@
 import { useEffect, useState } from "react";
-import { formatDistanceToNow } from "date-fns";
-import { ptBR } from "date-fns/locale";
 
-const CACHE_KEY = "gh_last_activity";
+const CACHE_KEY = "gh_last_activity_iso";
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutos
 
 interface CacheEntry {
   timestamp: number;
-  value: string | null;
+  value: string | null; // ISO 8601 do evento mais recente, ou null
 }
 
 function getCached(): string | null | undefined {
@@ -34,21 +32,31 @@ function setCache(value: string | null): void {
   }
 }
 
+function toActivityStatus(isoString: string): string | null {
+  const diffHours =
+    (Date.now() - new Date(isoString).getTime()) / (1000 * 60 * 60);
+  if (diffHours < 48) return "Desenvolvendo ativamente";
+  if (diffHours < 7 * 24) return "Trabalhando em novos projetos";
+  if (diffHours < 30 * 24) return "Desenvolvimento ativo";
+  return null;
+}
+
 export interface GitHubActivityState {
-  lastActivityText: string | null;
+  activityStatus: string | null;
   isLoading: boolean;
 }
 
 export function useGitHubActivity(): GitHubActivityState {
   const [state, setState] = useState<GitHubActivityState>({
-    lastActivityText: null,
+    activityStatus: null,
     isLoading: true,
   });
 
   useEffect(() => {
     const cached = getCached();
     if (cached !== undefined) {
-      setState({ lastActivityText: cached, isLoading: false });
+      const status = cached !== null ? toActivityStatus(cached) : null;
+      setState({ activityStatus: status, isLoading: false });
       return;
     }
 
@@ -63,29 +71,27 @@ export function useGitHubActivity(): GitHubActivityState {
 
         if (!res.ok) {
           setCache(null);
-          setState({ lastActivityText: null, isLoading: false });
+          setState({ activityStatus: null, isLoading: false });
           return;
         }
 
         const events = await res.json();
         if (!Array.isArray(events) || events.length === 0) {
           setCache(null);
-          setState({ lastActivityText: null, isLoading: false });
+          setState({ activityStatus: null, isLoading: false });
           return;
         }
 
         const createdAt: string = events[0].created_at;
-        const text = formatDistanceToNow(new Date(createdAt), {
-          addSuffix: true,
-          locale: ptBR,
+        setCache(createdAt);
+        setState({
+          activityStatus: toActivityStatus(createdAt),
+          isLoading: false,
         });
-
-        setCache(text);
-        setState({ lastActivityText: text, isLoading: false });
       } catch (err) {
         if ((err as Error).name === "AbortError") return;
         setCache(null);
-        setState({ lastActivityText: null, isLoading: false });
+        setState({ activityStatus: null, isLoading: false });
       }
     }
 
