@@ -15,8 +15,8 @@ import {
 const MotionExternalLink = motion.create(ExternalLink);
 
 const whatsappLink = {
-  title: "WhatsApp Business",
-  subtitle: "Orçamentos e Projetos",
+  title: "WhatsApp",
+  subtitle: "Entre em contato para projetos ou colaborações",
   url: "https://wa.me/557998554805",
   icon: <MessageCircle className="w-5 h-5" />,
 };
