@@ -88,50 +88,58 @@ export function StatusDynamic({
   const mobileCard = showMobileCard && mobileTop !== null && spotifyTrack
     ? createPortal(
         <AnimatePresence initial={false}>
-          <motion.div
+          {/* Wrapper estático cuida de fixed+center; motion.div cuida só de opacity/y */}
+          <div
             ref={cardRef}
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.2 }}
-            className="fixed left-1/2 z-[60] -translate-x-1/2 brutalist-link bg-link text-link-foreground px-4 py-3 text-left shadow-[6px_6px_0px_#111111]"
             style={{
+              position: "fixed",
               top: `${mobileTop}px`,
+              left: "50%",
+              transform: "translateX(-50%)",
               width: "min(340px, calc(100vw - 2rem))",
+              zIndex: 60,
             }}
           >
-            <div className="flex items-start gap-3">
-              {spotifyTrack.albumImageUrl ? (
-                <img
-                  src={spotifyTrack.albumImageUrl}
-                  alt={`Capa de ${spotifyTrack.albumName}`}
-                  className="w-14 h-14 object-cover border border-border shrink-0"
-                  loading="lazy"
-                  decoding="async"
-                />
-              ) : (
-                <span className="w-14 h-14 border border-border flex items-center justify-center shrink-0">
-                  <Music2 className="w-4 h-4" />
-                </span>
-              )}
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.2 }}
+              className="brutalist-link bg-link text-link-foreground px-4 py-3 text-left shadow-[6px_6px_0px_#111111]"
+            >
+              <div className="flex items-start gap-3">
+                {spotifyTrack.albumImageUrl ? (
+                  <img
+                    src={spotifyTrack.albumImageUrl}
+                    alt={`Capa de ${spotifyTrack.albumName}`}
+                    className="w-14 h-14 object-cover border border-border shrink-0"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                ) : (
+                  <span className="w-14 h-14 border border-border flex items-center justify-center shrink-0">
+                    <Music2 className="w-4 h-4" />
+                  </span>
+                )}
 
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold leading-tight truncate">{spotifyTrack.songName}</p>
-                <p className="text-xs opacity-70 mt-1">{spotifyTrack.artistNames}</p>
-                <p className="text-xs opacity-70 mt-1">Album: {spotifyTrack.albumName}</p>
+                <div>
+                  <p className="text-sm font-semibold leading-tight">{spotifyTrack.songName}</p>
+                  <p className="text-xs opacity-70 mt-1">{spotifyTrack.artistNames}</p>
+                  <p className="text-xs opacity-70 mt-1">Album: {spotifyTrack.albumName}</p>
+                </div>
               </div>
-            </div>
 
-            {spotifyTrack.trackUrl && (
-              <ExternalLink
-                url={spotifyTrack.trackUrl}
-                className="inline-flex mt-3 text-xs underline underline-offset-2"
-                aria-label="Abrir faixa no Spotify"
-              >
-                Abrir no Spotify
-              </ExternalLink>
-            )}
-          </motion.div>
+              {spotifyTrack.trackUrl && (
+                <ExternalLink
+                  url={spotifyTrack.trackUrl}
+                  className="inline-flex mt-3 text-xs underline underline-offset-2"
+                  aria-label="Abrir faixa no Spotify"
+                >
+                  Abrir no Spotify
+                </ExternalLink>
+              )}
+            </motion.div>
+          </div>
         </AnimatePresence>,
         document.body,
       )
