@@ -17,6 +17,7 @@ import { useSpotifyNowPlaying } from "@/hooks/useSpotifyNowPlaying";
 import { profileDescription } from "@/lib/statusConfig";
 
 const MotionExternalLink = motion.create(ExternalLink);
+const SHOW_SCHEDULED_STATUS_MESSAGES = false;
 
 const whatsappLink = {
   title: "WhatsApp",
@@ -160,6 +161,7 @@ const Index = () => {
           <StatusDynamic
             spotifyTrack={spotifyTrack}
             spotifyError={spotifyNowPlayingError}
+            showScheduledMessages={SHOW_SCHEDULED_STATUS_MESSAGES}
           />
         </motion.div>
 
