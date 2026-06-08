@@ -173,7 +173,7 @@ export function StatusDynamic({
                 });
               }
             }}
-            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            className="spotify-status-text spotify-status-trigger transition-colors"
             aria-expanded={isExpanded}
             aria-label={`Abrir detalhes da musica ${spotifyTrack.songName}`}
           >
@@ -229,7 +229,7 @@ export function StatusDynamic({
           </AnimatePresence>
         </div>
       ) : (
-        <span className="text-sm text-muted-foreground">{status.statusText}</span>
+        <span className="spotify-status-text">{status.statusText}</span>
       )}
 
       {import.meta.env.DEV && spotifyError && (

@@ -330,6 +330,24 @@ All colors MUST be HSL.
   margin: 0 auto;
 }
 
+.spotify-status-text {
+  color: hsl(var(--muted-foreground));
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .spotify-status-trigger:hover {
+    color: hsl(var(--foreground));
+  }
+}
+
+@media (max-width: 640px) {
+  .spotify-status-text {
+    font-size: 0.78rem;
+  }
+}
+
 @keyframes ltTaglineReveal {
   0% {
     opacity: 0;
@@ -340,5 +358,4 @@ All colors MUST be HSL.
     transform: translateY(0);
   }
 }
-
 
