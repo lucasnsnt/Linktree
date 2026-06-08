@@ -21,9 +21,9 @@ export function StatusDynamic({
   const [canHover, setCanHover] = useState(false);
   const [hoverExpanded, setHoverExpanded] = useState(false);
   const [tapExpanded, setTapExpanded] = useState(false);
+  const [mobileTop, setMobileTop] = useState<number | null>(null);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
-  const cardRef = useRef<HTMLDivElement | null>(null);
 
   const status = resolveDynamicStatus({ spotifyTrack }, seed);
 
@@ -40,18 +40,41 @@ export function StatusDynamic({
   useEffect(() => {
     if (canHover || !tapExpanded) return;
 
-    function handlePointerDown(event: PointerEvent) {
-      const target = event.target as Node;
-      const clickedTrigger = Boolean(triggerRef.current?.contains(target));
-      const clickedCard = Boolean(cardRef.current?.contains(target));
+    function closeOnOutside(event: Event) {
+      const target = event.target as Node | null;
+      if (!target) return;
 
-      if (!clickedTrigger && !clickedCard) {
+      const clickedInsideWrapper = Boolean(wrapperRef.current?.contains(target));
+      if (!clickedInsideWrapper) {
         setTapExpanded(false);
       }
     }
 
-    document.addEventListener("pointerdown", handlePointerDown);
-    return () => document.removeEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("touchstart", closeOnOutside, { passive: true });
+    document.addEventListener("mousedown", closeOnOutside);
+    return () => {
+      document.removeEventListener("touchstart", closeOnOutside);
+      document.removeEventListener("mousedown", closeOnOutside);
+    };
+  }, [canHover, tapExpanded]);
+
+  useEffect(() => {
+    if (canHover || !tapExpanded) return;
+
+    function updateMobileTop() {
+      const rect = triggerRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      setMobileTop(rect.bottom + 8);
+    }
+
+    updateMobileTop();
+    window.addEventListener("resize", updateMobileTop);
+    window.addEventListener("scroll", updateMobileTop, true);
+
+    return () => {
+      window.removeEventListener("resize", updateMobileTop);
+      window.removeEventListener("scroll", updateMobileTop, true);
+    };
   }, [canHover, tapExpanded]);
 
   const isExpanded = canHover ? hoverExpanded : tapExpanded;
@@ -74,7 +97,14 @@ export function StatusDynamic({
             type="button"
             onClick={() => {
               if (!canHover) {
-                setTapExpanded((current) => !current);
+                setTapExpanded((current) => {
+                  const next = !current;
+                  if (!current) {
+                    const rect = triggerRef.current?.getBoundingClientRect();
+                    if (rect) setMobileTop(rect.bottom + 8);
+                  }
+                  return next;
+                });
               }
             }}
             className="text-sm text-muted-foreground hover:text-foreground transition-colors"
@@ -88,12 +118,16 @@ export function StatusDynamic({
           <AnimatePresence initial={false}>
             {isExpanded && (
               <motion.div
-                ref={cardRef}
                 initial={{ opacity: 0, y: -8 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -8 }}
                 transition={{ duration: 0.2 }}
-                className="absolute top-full left-1/2 z-30 mt-2 w-[340px] max-w-[calc(100vw-2rem)] -translate-x-1/2 brutalist-link bg-link text-link-foreground px-4 py-3 text-left shadow-[6px_6px_0px_#111111]"
+                className={`${
+                  canHover
+                    ? "absolute top-full left-1/2 z-30 mt-2 w-[340px] max-w-[calc(100vw-2rem)] -translate-x-1/2"
+                    : "fixed left-1/2 z-50 w-[340px] max-w-[calc(100vw-2rem)] -translate-x-1/2"
+                } brutalist-link bg-link text-link-foreground px-4 py-3 text-left shadow-[6px_6px_0px_#111111]`}
+                style={!canHover && mobileTop !== null ? { top: `${mobileTop}px` } : undefined}
               >
                 <div className="flex items-start gap-3">
                   {spotifyTrack.albumImageUrl ? (

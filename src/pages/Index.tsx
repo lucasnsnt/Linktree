@@ -84,7 +84,7 @@ const Index = () => {
   }, []);
 
   return (
-    <main className="min-h-screen bg-background flex flex-col items-center justify-between px-4 py-8">
+    <main className="min-h-screen overflow-x-hidden bg-background flex flex-col items-center justify-between px-4 py-8">
       {/* Main Content */}
       <motion.div
         className="w-full max-w-[680px] flex flex-col items-center gap-6 flex-1"
