@@ -1,16 +1,21 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Instagram, Linkedin, Github, Globe, ExternalLink as ExternalLinkIcon, MessageCircle, Music, Info } from "lucide-react";
+import {
+  Instagram,
+  Linkedin,
+  Github,
+  Globe,
+  ExternalLink as ExternalLinkIcon,
+  MessageCircle,
+  Music,
+} from "lucide-react";
 import avatarImg from "@/assets/avatar.webp";
 import { ExternalLink } from "@/components/ExternalLink";
+import { StatusDynamic } from "@/components/StatusDynamic";
 import { isInAppBrowser } from "@/lib/browser";
 import { useGitHubActivity } from "@/hooks/useGitHubActivity";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { useSpotifyNowPlaying } from "@/hooks/useSpotifyNowPlaying";
+import { profileDescription } from "@/lib/statusConfig";
 
 const MotionExternalLink = motion.create(ExternalLink);
 
@@ -64,7 +69,11 @@ const item = {
 
 const Index = () => {
   const [canHover, setCanHover] = useState(false);
-  const { activityStatus } = useGitHubActivity();
+  const { hasRecentCommit } = useGitHubActivity();
+  const {
+    track: spotifyTrack,
+    error: spotifyNowPlayingError,
+  } = useSpotifyNowPlaying();
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(hover: hover) and (pointer: fine)");
@@ -144,30 +153,17 @@ const Index = () => {
         
         <div className="text-center">
           <p className="lt-tagline">
-            Desenvolvedor web com experiência em Java e React.
+            {profileDescription}
           </p>
         </div>
 
         {/* Status Section */}
-        <motion.div variants={item} className="flex flex-col items-center gap-1 text-center">
-          <span className="text-sm text-muted-foreground">
-            Disponível para projetos
-          </span>
-          {activityStatus && (
-            <TooltipProvider delayDuration={200}>
-              <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                {activityStatus}
-                <Tooltip>
-                  <TooltipTrigger className="inline-flex items-center cursor-default bg-transparent border-0 p-0 leading-none" aria-label="Informação sobre o status">
-                    <Info className="w-3 h-3 opacity-50 shrink-0" />
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom" className="max-w-[220px] text-center text-xs">
-                    Status atualizado automaticamente com base na atividade pública do GitHub.
-                  </TooltipContent>
-                </Tooltip>
-              </span>
-            </TooltipProvider>
-          )}
+        <motion.div variants={item} className="w-full flex justify-center">
+          <StatusDynamic
+            hasRecentCommit={hasRecentCommit}
+            spotifyTrack={spotifyTrack}
+            spotifyError={spotifyNowPlayingError}
+          />
         </motion.div>
 
         {/* WebView Banner */}
@@ -190,17 +186,6 @@ const Index = () => {
             e abra no navegador.
           </motion.div>
         )}
-
-        {/* Social Icon */}
-        <motion.div variants={item}>
-          <ExternalLink
-            url="https://www.instagram.com/lucasnsnt"
-            className={`text-foreground transition-colors ${canHover ? "hover:text-accent" : ""}`}
-            aria-label="Instagram"
-          >
-            <Instagram className="w-6 h-6" />
-          </ExternalLink>
-        </motion.div>
 
         {/* WhatsApp Business */}
         <MotionExternalLink

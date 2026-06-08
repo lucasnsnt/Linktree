@@ -2,10 +2,16 @@ import { useEffect, useState } from "react";
 
 const CACHE_KEY = "gh_last_activity_iso";
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutos
+const RECENT_COMMIT_WINDOW_MS = 2 * 60 * 60 * 1000;
 
 interface CacheEntry {
   timestamp: number;
   value: string | null; // ISO 8601 do evento mais recente, ou null
+}
+
+interface GitHubEvent {
+  type?: string;
+  created_at?: string;
 }
 
 function getCached(): string | null | undefined {
@@ -32,31 +38,32 @@ function setCache(value: string | null): void {
   }
 }
 
-function toActivityStatus(isoString: string): string | null {
-  const diffHours =
-    (Date.now() - new Date(isoString).getTime()) / (1000 * 60 * 60);
-  if (diffHours < 48) return "Desenvolvendo ativamente";
-  if (diffHours < 7 * 24) return "Trabalhando em novos projetos";
-  if (diffHours < 30 * 24) return "Desenvolvimento ativo";
-  return null;
+function hasRecentCommitFromIso(isoString: string): boolean {
+  const diffMs = Date.now() - new Date(isoString).getTime();
+  return diffMs >= 0 && diffMs <= RECENT_COMMIT_WINDOW_MS;
 }
 
 export interface GitHubActivityState {
-  activityStatus: string | null;
+  hasRecentCommit: boolean;
+  lastCommitAt: string | null;
   isLoading: boolean;
 }
 
 export function useGitHubActivity(): GitHubActivityState {
   const [state, setState] = useState<GitHubActivityState>({
-    activityStatus: null,
+    hasRecentCommit: false,
+    lastCommitAt: null,
     isLoading: true,
   });
 
   useEffect(() => {
     const cached = getCached();
     if (cached !== undefined) {
-      const status = cached !== null ? toActivityStatus(cached) : null;
-      setState({ activityStatus: status, isLoading: false });
+      setState({
+        hasRecentCommit: cached ? hasRecentCommitFromIso(cached) : false,
+        lastCommitAt: cached,
+        isLoading: false,
+      });
       return;
     }
 
@@ -65,33 +72,38 @@ export function useGitHubActivity(): GitHubActivityState {
     async function fetchActivity() {
       try {
         const res = await fetch(
-          "https://api.github.com/users/lucasnsnt/events/public?per_page=1",
+          "https://api.github.com/users/lucasnsnt/events/public?per_page=30",
           { signal: controller.signal }
         );
 
         if (!res.ok) {
           setCache(null);
-          setState({ activityStatus: null, isLoading: false });
+          setState({ hasRecentCommit: false, lastCommitAt: null, isLoading: false });
           return;
         }
 
-        const events = await res.json();
+        const events = (await res.json()) as GitHubEvent[];
         if (!Array.isArray(events) || events.length === 0) {
           setCache(null);
-          setState({ activityStatus: null, isLoading: false });
+          setState({ hasRecentCommit: false, lastCommitAt: null, isLoading: false });
           return;
         }
 
-        const createdAt: string = events[0].created_at;
-        setCache(createdAt);
+        const latestPushIso =
+          events.find(
+            (event) => event.type === "PushEvent" && typeof event.created_at === "string"
+          )?.created_at ?? null;
+
+        setCache(latestPushIso);
         setState({
-          activityStatus: toActivityStatus(createdAt),
+          hasRecentCommit: latestPushIso ? hasRecentCommitFromIso(latestPushIso) : false,
+          lastCommitAt: latestPushIso,
           isLoading: false,
         });
       } catch (err) {
         if ((err as Error).name === "AbortError") return;
         setCache(null);
-        setState({ activityStatus: null, isLoading: false });
+        setState({ hasRecentCommit: false, lastCommitAt: null, isLoading: false });
       }
     }
 
