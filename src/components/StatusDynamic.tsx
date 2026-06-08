@@ -12,13 +12,11 @@ import {
 interface StatusDynamicProps {
   spotifyTrack: SpotifyNowPlayingTrack | null;
   spotifyError: string | null;
-  showScheduledMessages?: boolean;
 }
 
 export function StatusDynamic({
   spotifyTrack,
   spotifyError,
-  showScheduledMessages = true,
 }: StatusDynamicProps) {
   const seed = useMemo(() => createDynamicStatusSeed(), []);
   const [canHover, setCanHover] = useState(false);
@@ -30,10 +28,6 @@ export function StatusDynamic({
   const cardRef = useRef<HTMLDivElement | null>(null);
 
   const status = resolveDynamicStatus({ spotifyTrack }, seed);
-
-  if (!showScheduledMessages && !status.showSpotifyCard) {
-    return null;
-  }
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(hover: hover) and (pointer: fine)");

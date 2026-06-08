@@ -157,13 +157,14 @@ const Index = () => {
         </div>
 
         {/* Status Section */}
-        <motion.div variants={item} className="w-full flex justify-center">
-          <StatusDynamic
-            spotifyTrack={spotifyTrack}
-            spotifyError={spotifyNowPlayingError}
-            showScheduledMessages={SHOW_SCHEDULED_STATUS_MESSAGES}
-          />
-        </motion.div>
+        {(SHOW_SCHEDULED_STATUS_MESSAGES || spotifyTrack) && (
+          <motion.div variants={item} className="w-full flex justify-center">
+            <StatusDynamic
+              spotifyTrack={spotifyTrack}
+              spotifyError={spotifyNowPlayingError}
+            />
+          </motion.div>
+        )}
 
         {/* WebView Banner */}
         {isInAppBrowser() && (
