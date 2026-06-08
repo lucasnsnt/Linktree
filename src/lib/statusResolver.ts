@@ -33,7 +33,7 @@ export function resolveDynamicStatus(
 ): DynamicStatusOutput {
   if (input.spotifyTrack) {
     return {
-      statusText: `ouvindo "${input.spotifyTrack.songName}" no Spotify agora`,
+      statusText: `to ouvindo "${input.spotifyTrack.songName}" no Spotify agora`,
       showSpotifyCard: true,
     };
   }
