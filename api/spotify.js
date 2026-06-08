@@ -1,6 +1,33 @@
 const SPOTIFY_TOKEN_URL = "https://accounts.spotify.com/api/token";
 const SPOTIFY_NOW_PLAYING_URL = "https://api.spotify.com/v1/me/player/currently-playing";
 
+function buildPayloadSnapshot(payload) {
+  return {
+    is_playing: payload?.is_playing ?? null,
+    currently_playing_type: payload?.currently_playing_type ?? null,
+    progress_ms: payload?.progress_ms ?? null,
+    item: payload?.item
+      ? {
+          name: payload.item.name ?? null,
+          explicit: Boolean(payload.item.explicit),
+          artists: Array.isArray(payload.item.artists)
+            ? payload.item.artists.map((artist) => artist?.name ?? null)
+            : [],
+        }
+      : null,
+  };
+}
+
+function logNotPlaying(reason, payload) {
+  console.log(
+    "[api/spotify] returning not-playing",
+    JSON.stringify({
+      reason,
+      received: buildPayloadSnapshot(payload),
+    }),
+  );
+}
+
 function getRequiredEnv(name) {
   const value = process.env[name];
   if (!value || !value.trim()) {
@@ -76,6 +103,7 @@ export default async function handler(req, res) {
     });
 
     if (spotifyResponse.status === 204) {
+      logNotPlaying("spotify-204-no-content", null);
       return res.status(200).json({ status: "not-playing" });
     }
 
@@ -85,7 +113,18 @@ export default async function handler(req, res) {
     }
 
     const payload = await spotifyResponse.json();
-    if (!payload?.is_playing || payload?.currently_playing_type !== "track" || !payload?.item) {
+    if (!payload?.is_playing) {
+      logNotPlaying("is_playing_false", payload);
+      return res.status(200).json({ status: "not-playing" });
+    }
+
+    if (payload?.currently_playing_type !== "track") {
+      logNotPlaying("currently_playing_type_not_track", payload);
+      return res.status(200).json({ status: "not-playing" });
+    }
+
+    if (!payload?.item) {
+      logNotPlaying("missing_item", payload);
       return res.status(200).json({ status: "not-playing" });
     }
 

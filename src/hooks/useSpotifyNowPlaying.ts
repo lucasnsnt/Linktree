@@ -73,7 +73,7 @@ export function useSpotifyNowPlaying(): SpotifyNowPlayingState {
           result.track.songName,
           result.track.artistNames,
         ]);
-        const shouldBlock = result.track.isExplicit || blockedByTerm;
+        const shouldBlock = blockedByTerm;
 
         setState({
           track: shouldBlock ? null : result.track,

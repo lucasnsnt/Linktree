@@ -13,7 +13,6 @@ import avatarImg from "@/assets/avatar.webp";
 import { ExternalLink } from "@/components/ExternalLink";
 import { StatusDynamic } from "@/components/StatusDynamic";
 import { isInAppBrowser } from "@/lib/browser";
-import { useGitHubActivity } from "@/hooks/useGitHubActivity";
 import { useSpotifyNowPlaying } from "@/hooks/useSpotifyNowPlaying";
 import { profileDescription } from "@/lib/statusConfig";
 
@@ -69,7 +68,6 @@ const item = {
 
 const Index = () => {
   const [canHover, setCanHover] = useState(false);
-  const { hasRecentCommit } = useGitHubActivity();
   const {
     track: spotifyTrack,
     error: spotifyNowPlayingError,
@@ -160,7 +158,6 @@ const Index = () => {
         {/* Status Section */}
         <motion.div variants={item} className="w-full flex justify-center">
           <StatusDynamic
-            hasRecentCommit={hasRecentCommit}
             spotifyTrack={spotifyTrack}
             spotifyError={spotifyNowPlayingError}
           />
