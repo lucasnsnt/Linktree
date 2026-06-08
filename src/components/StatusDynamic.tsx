@@ -125,7 +125,7 @@ export function StatusDynamic({
                 className={`${
                   canHover
                     ? "absolute top-full left-1/2 z-30 mt-2 w-[340px] max-w-[calc(100vw-2rem)] -translate-x-1/2"
-                    : "fixed left-1/2 z-50 w-[90vw] max-w-[90vw] -translate-x-1/2"
+                    : "fixed left-1/2 z-50 w-[min(340px,calc(100vw-2rem))] -translate-x-1/2"
                 } brutalist-link bg-link text-link-foreground px-4 py-3 text-left shadow-[6px_6px_0px_#111111]`}
                 style={!canHover && mobileTop !== null ? { top: `${mobileTop}px` } : undefined}
               >
