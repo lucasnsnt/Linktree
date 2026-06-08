@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown, Music2 } from "lucide-react";
 import { ExternalLink } from "@/components/ExternalLink";
@@ -21,6 +21,9 @@ export function StatusDynamic({
   const [canHover, setCanHover] = useState(false);
   const [hoverExpanded, setHoverExpanded] = useState(false);
   const [tapExpanded, setTapExpanded] = useState(false);
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const cardRef = useRef<HTMLDivElement | null>(null);
 
   const status = resolveDynamicStatus({ spotifyTrack }, seed);
 
@@ -34,13 +37,31 @@ export function StatusDynamic({
     return () => mediaQuery.removeEventListener("change", onChange);
   }, []);
 
+  useEffect(() => {
+    if (canHover || !tapExpanded) return;
+
+    function handlePointerDown(event: PointerEvent) {
+      const target = event.target as Node;
+      const clickedTrigger = Boolean(triggerRef.current?.contains(target));
+      const clickedCard = Boolean(cardRef.current?.contains(target));
+
+      if (!clickedTrigger && !clickedCard) {
+        setTapExpanded(false);
+      }
+    }
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
+  }, [canHover, tapExpanded]);
+
   const isExpanded = canHover ? hoverExpanded : tapExpanded;
 
   return (
     <div className="w-full max-w-[560px] flex flex-col items-center gap-2 text-center">
       {status.showSpotifyCard && spotifyTrack ? (
         <div
-          className="w-full max-w-[460px] flex flex-col items-center"
+          ref={wrapperRef}
+          className="relative w-full max-w-[460px] flex flex-col items-center"
           onMouseEnter={() => {
             if (canHover) setHoverExpanded(true);
           }}
@@ -49,6 +70,7 @@ export function StatusDynamic({
           }}
         >
           <button
+            ref={triggerRef}
             type="button"
             onClick={() => {
               if (!canHover) {
@@ -66,11 +88,12 @@ export function StatusDynamic({
           <AnimatePresence initial={false}>
             {isExpanded && (
               <motion.div
+                ref={cardRef}
                 initial={{ opacity: 0, y: -8 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -8 }}
                 transition={{ duration: 0.2 }}
-                className="mt-2 w-full brutalist-link bg-link text-link-foreground px-4 py-3 text-left"
+                className="absolute top-full left-1/2 z-30 mt-2 w-[340px] max-w-[calc(100vw-2rem)] -translate-x-1/2 brutalist-link bg-link text-link-foreground px-4 py-3 text-left shadow-[6px_6px_0px_#111111]"
               >
                 <div className="flex items-start gap-3">
                   {spotifyTrack.albumImageUrl ? (
