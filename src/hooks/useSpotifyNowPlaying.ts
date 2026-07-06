@@ -7,6 +7,7 @@ const SPOTIFY_POLL_INTERVAL_MS = 30_000;
 interface SpotifyNowPlayingApiResponse {
   status: "playing" | "not-playing" | "error";
   track?: SpotifyNowPlayingTrack;
+  allowed?: boolean;
   error?: string;
 }
 
@@ -73,7 +74,8 @@ export function useSpotifyNowPlaying(): SpotifyNowPlayingState {
           result.track.songName,
           result.track.artistNames,
         ]);
-        const shouldBlock = blockedByTerm;
+        // Aqui aplicamos a regra: bloquear se palavra proibida OU se 'allowed' === false
+        const shouldBlock = blockedByTerm || result.allowed === false;
 
         setState({
           track: shouldBlock ? null : result.track,
