@@ -100,6 +100,35 @@ function isValidationDebugEnabled(req) {
   return queryEnabled || envEnabled;
 }
 
+/**
+ * Lê as playlists permitidas a partir de variáveis de ambiente individuais
+ * (PLAYLIST_1_ID..PLAYLIST_4_ID). Ignora valores vazios/ausentes, então
+ * funciona mesmo que só 1, 2 ou 3 estejam preenchidas. Deduplica IDs.
+ */
+function getAllowedPlaylistIds() {
+  const envNames = ["PLAYLIST_1_ID", "PLAYLIST_2_ID", "PLAYLIST_3_ID", "PLAYLIST_4_ID"];
+  const ids = envNames
+    .map((name) => process.env[name])
+    .filter((value) => typeof value === "string" && value.trim().length > 0)
+    .map((value) => value.trim());
+
+  return Array.from(new Set(ids));
+}
+
+/**
+ * Extrai o ID da playlist a partir do `context` retornado por
+ * /currently-playing (ex.: context.uri = "spotify:playlist:<id>").
+ * Retorna null se a reprodução não estiver no contexto de uma playlist.
+ */
+function extractContextPlaylistId(payload) {
+  const context = payload?.context;
+  if (!context || context.type !== "playlist" || typeof context.uri !== "string") {
+    return null;
+  }
+  const match = context.uri.match(/^spotify:playlist:(.+)$/);
+  return match ? match[1] : null;
+}
+
 export default async function handler(req, res) {
   if (req.method !== "GET") {
     res.setHeader("Allow", "GET");
@@ -141,47 +170,85 @@ export default async function handler(req, res) {
       return res.status(200).json({ status: "not-playing" });
     }
 
-    // Decidir allowed com base no conjunto de track IDs da playlist mesclada.
-    // Modo estrito: se não for possível validar, bloqueia.
+    // Estratégia de validação em duas camadas:
+    //
+    // 1) PRIMÁRIA — contexto de reprodução: o próprio /currently-playing já
+    //    informa de qual playlist a faixa está tocando (`context.uri`). Se
+    //    bater com alguma das playlists permitidas, aceitamos direto. Não
+    //    depende de nenhum scope extra e não faz chamada adicional à API.
+    //
+    // 2) SECUNDÁRIA (fallback) — membership real: busca as faixas de cada
+    //    playlist permitida e verifica se o `track.id` atual está em
+    //    alguma delas. Só é usada quando o contexto não bate (ex.: tocou
+    //    fora do contexto de playlist, ou o campo veio nulo). Se essa
+    //    chamada falhar (ex.: 403 por falta de scope `playlist-read-private`),
+    //    NÃO derruba o site: apenas essa camada fica indisponível, e o
+    //    resultado final permanece fail-closed (allowed=false) se nenhuma
+    //    das duas camadas confirmou.
     let allowed = false;
     let validationDebug = null;
+    let validationMethod = "none";
     try {
-      const allowedSnapshot = await getAllowedSet(accessToken);
-      const allowedSet = allowedSnapshot.allowedSet;
       const trackId = payload.item?.id ?? null;
+      const allowedPlaylistIds = getAllowedPlaylistIds();
+      const contextPlaylistId = extractContextPlaylistId(payload);
+      const contextMatches = Boolean(
+        contextPlaylistId && allowedPlaylistIds.includes(contextPlaylistId),
+      );
+
+      let membershipSnapshot = null;
+
+      if (contextMatches) {
+        allowed = true;
+        validationMethod = "context-match";
+      } else if (allowedPlaylistIds.length === 0) {
+        // Nenhuma playlist configurada: não há como validar com segurança.
+        allowed = false;
+        validationMethod = "unconfigured";
+      } else {
+        // Contexto não confirmou: tenta a validação por membership como reforço.
+        membershipSnapshot = await getMembershipSnapshot(allowedPlaylistIds, accessToken);
+        const allowedSet = membershipSnapshot.allowedSet;
+
+        if (allowedSet && trackId && allowedSet.has(trackId)) {
+          allowed = true;
+          validationMethod = "membership-match";
+        } else if (allowedSet) {
+          allowed = false;
+          validationMethod = "membership-no-match";
+        } else {
+          // Nenhuma playlist pôde ser lida (todas falharam): bloqueia por segurança.
+          allowed = false;
+          validationMethod = "unavailable";
+        }
+      }
 
       if (validationDebugEnabled) {
         validationDebug = {
           trackId,
+          validationMethod,
+          allowedPlaylistIds,
           spotifyContext: {
             type: payload?.context?.type ?? null,
             uri: payload?.context?.uri ?? null,
+            extractedPlaylistId: contextPlaylistId,
           },
-          playlistValidation: {
-            playlistId: allowedSnapshot.playlistId,
-            source: allowedSnapshot.source,
-            cacheSize: allowedSnapshot.cacheSize,
-            usedStaleCache: allowedSnapshot.usedStaleCache,
-            fetchError: allowedSnapshot.fetchError,
-          },
+          contextMatches,
+          membershipValidation: membershipSnapshot
+            ? {
+                combinedCacheSize: membershipSnapshot.cacheSize,
+                perPlaylist: membershipSnapshot.perPlaylist,
+              }
+            : { skipped: true, reason: "context-match ou sem playlists configuradas" },
         };
-      }
-
-      if (allowedSet && trackId) {
-        allowed = allowedSet.has(trackId);
-      } else if (allowedSet && !trackId) {
-        // sem trackId, consideramos não permitido por segurança
-        allowed = false;
-      } else {
-        // sem conjunto válido de permissões, bloqueia por segurança
-        allowed = false;
       }
     } catch (err) {
       console.error("[api/spotify] error determining allowed:", err instanceof Error ? err.message : err);
-      // Em erro, bloqueia por segurança
+      // Em erro inesperado, bloqueia por segurança
       allowed = false;
       if (validationDebugEnabled) {
         validationDebug = {
+          validationMethod: "error",
           error: err instanceof Error ? err.message : String(err),
         };
       }
@@ -206,46 +273,38 @@ export default async function handler(req, res) {
   }
 }
 
-/* ---------------- playlist membership validation ---------------- */
+/* ---------------- playlist membership validation (fallback) ---------------- */
 /*
- * DESIGN NOTES (por que este desenho e não outro):
+ * DESIGN NOTES:
  *
- * 1. A resposta do Spotify em /me/player/currently-playing NÃO garante que a
- *    faixa pertence a uma playlist específica. Ela só informa a faixa atual
- *    e, opcionalmente, um `context` (de onde a reprodução foi iniciada).
+ * 1. A resposta do Spotify em /me/player/currently-playing NÃO garante, por
+ *    si só, que a faixa pertence a uma playlist específica — ela só informa
+ *    a faixa atual e, opcionalmente, um `context` (de onde a reprodução foi
+ *    iniciada). Usamos o `context` como validação PRIMÁRIA (ver handler),
+ *    por ser rápida e não exigir permissões extras.
  *
- * 2. `context.uri` foi CONSIDERADO e REJEITADO como fonte de verdade:
- *    ele reflete apenas de onde o usuário deu play, não se a faixa atual
- *    está de fato na playlist permitida (ex.: pode tocar via álbum, rádio,
- *    autoplay ou link direto). Usá-lo como bypass criaria falso-positivo
- *    de segurança. Por isso ele é usado apenas para fins de log/debug.
+ * 2. Esta camada de MEMBERSHIP é o fallback: busca de fato os IDs de faixas
+ *    de cada playlist permitida e compara com o `track.id` atual. É mais
+ *    cara (uma ou mais chamadas de API) e depende do scope
+ *    `playlist-read-private` (e `playlist-read-collaborative` se aplicável)
+ *    estar concedido no refresh token. Se o scope estiver ausente, as
+ *    chamadas falham com 403 e esta camada simplesmente fica indisponível —
+ *    sem derrubar a validação primária.
  *
- * 3. A única fonte de verdade confiável é MEMBERSHIP: buscar os IDs de
- *    faixas da playlist permitida e comparar com o `track.id` atual.
+ * 3. Cache por playlist usando `snapshot_id`: esse campo muda sempre que o
+ *    conteúdo da playlist é editado. Consultamos esse valor (barato, sem
+ *    paginação) e só repaginamos a playlist inteira quando ele muda (ou não
+ *    há cache ainda). Um TTL adicional serve como rede de segurança.
  *
- * 4. Buscar todas as faixas a cada request seria caro/lento. Em vez de
- *    confiar apenas em TTL (que pode servir dados desatualizados por
- *    minutos após uma edição na playlist), usamos o campo `snapshot_id`
- *    da playlist: ele muda sempre que o conteúdo da playlist muda.
- *    - Consulta barata (sem paginação) ao snapshot_id a cada request.
- *    - Só repaginamos a playlist inteira quando o snapshot_id muda
- *      (ou não há cache ainda).
- *    - TTL continua como rede de segurança adicional (defesa em profundidade),
- *      caso o snapshot_id não mude mas queiramos forçar refresh periódico.
- *
- * 5. Modo fail-closed: qualquer incerteza (env ausente, erro de rede,
- *    falta de permissão, resposta inesperada) resulta em `allowed = false`.
- *    Preferimos esconder uma faixa válida por engano a expor uma faixa
- *    fora da playlist permitida.
+ * 4. Modo fail-closed: se uma playlist não puder ser lida (erro de rede,
+ *    permissão, etc.) e não houver cache válido anterior para ela, essa
+ *    playlist simplesmente não contribui com IDs. Se NENHUMA playlist
+ *    puder ser lida, o resultado final é "não foi possível validar" e o
+ *    handler bloqueia por segurança.
  */
 
-const playlistCache = {
-  playlistId: null,
-  snapshotId: null,
-  ids: new Set(),
-  fetchedAt: 0,
-  ttl: Number(process.env.ALLOWED_SPOTIFY_PLAYLIST_CACHE_TTL_MS || 10 * 60 * 1000),
-};
+const playlistCaches = new Map(); // playlistId -> { snapshotId, ids: Set, fetchedAt }
+const PLAYLIST_CACHE_TTL_MS = Number(process.env.ALLOWED_SPOTIFY_PLAYLIST_CACHE_TTL_MS || 10 * 60 * 1000);
 
 async function fetchPlaylistSnapshotId(playlistId, accessToken) {
   const resp = await fetch(SPOTIFY_PLAYLIST_SNAPSHOT_URL(playlistId), {
@@ -305,66 +364,63 @@ async function fetchPlaylistTrackIds(playlistId, accessToken) {
 }
 
 /**
- * Retorna um snapshot com o conjunto de IDs permitidos (ou null se não for
- * possível validar com segurança) junto de metadados úteis para debug.
+ * Garante que o cache de uma playlist individual esteja atualizado
+ * (via snapshot_id) e retorna metadados de debug sobre a operação.
  */
-async function getAllowedSet(accessToken) {
-  const playlistId = process.env.ALLOWED_SPOTIFY_PLAYLIST_ID;
-  const result = {
-    playlistId: playlistId ?? null,
-    source: "none",
-    cacheSize: playlistCache.ids.size,
-    usedStaleCache: false,
-    fetchError: null,
-    allowedSet: null,
-  };
-
-  if (!playlistId) {
-    // Sem playlist configurada, não é possível validar com segurança.
-    return result;
-  }
-
+async function refreshPlaylistCacheEntry(playlistId, accessToken) {
   const now = Date.now();
-  const cacheIsForThisPlaylist = playlistCache.playlistId === playlistId;
-  const cacheHasData = cacheIsForThisPlaylist && playlistCache.ids.size > 0;
-  const cacheExpiredByTtl = now - playlistCache.fetchedAt > playlistCache.ttl;
+  const cached = playlistCaches.get(playlistId);
+  const cacheHasData = Boolean(cached && cached.ids.size > 0);
+  const cacheExpiredByTtl = !cached || now - cached.fetchedAt > PLAYLIST_CACHE_TTL_MS;
 
   try {
-    // Passo barato: descobrir se o conteúdo da playlist mudou.
     const currentSnapshotId = await fetchPlaylistSnapshotId(playlistId, accessToken);
 
-    if (cacheHasData && playlistCache.snapshotId === currentSnapshotId && !cacheExpiredByTtl) {
-      // Nada mudou desde a última vez: reaproveita cache sem repaginar.
-      result.source = "snapshot-match";
-    } else {
-      // Playlist mudou (ou cache expirou/não existe): repagina tudo.
-      const ids = await fetchPlaylistTrackIds(playlistId, accessToken);
-      playlistCache.playlistId = playlistId;
-      playlistCache.snapshotId = currentSnapshotId;
-      playlistCache.ids = ids;
-      playlistCache.fetchedAt = now;
-      result.source = "refreshed";
+    if (cacheHasData && cached.snapshotId === currentSnapshotId && !cacheExpiredByTtl) {
+      return { playlistId, source: "snapshot-match", cacheSize: cached.ids.size, fetchError: null };
     }
+
+    const ids = await fetchPlaylistTrackIds(playlistId, accessToken);
+    playlistCaches.set(playlistId, { snapshotId: currentSnapshotId, ids, fetchedAt: now });
+    return { playlistId, source: "refreshed", cacheSize: ids.size, fetchError: null };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    console.error("[api/spotify] could not validate playlist snapshot:", message);
-    result.fetchError = message;
+    console.error(`[api/spotify] could not validate playlist ${playlistId}:`, message);
 
-    // Defesa em profundidade: se já temos cache válido para esta playlist,
-    // toleramos uma falha pontual da API (rate limit, instabilidade) usando
-    // o cache existente. Sem isso, qualquer soluço da API do Spotify
-    // bloquearia o card do site sem necessidade.
     if (cacheHasData) {
-      result.source = "stale-cache";
-      result.usedStaleCache = true;
-    } else {
-      result.source = "unavailable";
-      result.cacheSize = 0;
-      return result;
+      return { playlistId, source: "stale-cache", cacheSize: cached.ids.size, fetchError: message };
+    }
+    return { playlistId, source: "unavailable", cacheSize: 0, fetchError: message };
+  }
+}
+
+/**
+ * Atualiza o cache de todas as playlists permitidas em paralelo e retorna
+ * um Set combinado com todos os IDs de faixas encontrados, além de
+ * metadados por playlist para debug. Se todas as playlists falharem (sem
+ * cache válido em nenhuma), `allowedSet` vem null (fail-closed).
+ */
+async function getMembershipSnapshot(allowedPlaylistIds, accessToken) {
+  const perPlaylist = await Promise.all(
+    allowedPlaylistIds.map((playlistId) => refreshPlaylistCacheEntry(playlistId, accessToken)),
+  );
+
+  const anyPlaylistReadable = perPlaylist.some((entry) => entry.source !== "unavailable");
+
+  const combinedIds = new Set();
+  if (anyPlaylistReadable) {
+    for (const playlistId of allowedPlaylistIds) {
+      const cached = playlistCaches.get(playlistId);
+      if (cached) {
+        for (const id of cached.ids) combinedIds.add(id);
+      }
     }
   }
 
-  result.cacheSize = playlistCache.ids.size;
-  result.allowedSet = playlistCache.ids;
-  return result;
+  return {
+    allowedSet: anyPlaylistReadable ? combinedIds : null,
+    cacheSize: combinedIds.size,
+    perPlaylist,
+  };
 }
+
