@@ -101,16 +101,49 @@ function isValidationDebugEnabled(req) {
 }
 
 /**
+ * Normaliza um valor de playlist ID vindo de variável de ambiente. Aceita:
+ * - ID puro: "6TaosFlkbYy8gbYUksrpcl"
+ * - URI do Spotify: "spotify:playlist:6TaosFlkbYy8gbYUksrpcl"
+ * - Link de compartilhamento (com ou sem tracking): 
+ *   "https://open.spotify.com/playlist/6TaosFlkbYy8gbYUksrpcl?si=xxxxx"
+ *
+ * Isso evita quebrar a validação quando alguém cola o link direto do
+ * Spotify (que inclui o parâmetro `?si=...` de rastreamento) em vez do
+ * ID puro — erro fácil de cometer e que quebra tanto a comparação por
+ * contexto quanto as chamadas à API de membership.
+ */
+function normalizePlaylistId(rawValue) {
+  if (typeof rawValue !== "string") return null;
+  let value = rawValue.trim();
+  if (!value) return null;
+
+  // Remove query string (ex.: "?si=...") e fragmento, se houver.
+  value = value.split("?")[0].split("#")[0];
+
+  // URI: "spotify:playlist:<id>"
+  const uriMatch = value.match(/^spotify:playlist:([A-Za-z0-9]+)$/);
+  if (uriMatch) return uriMatch[1];
+
+  // URL: ".../playlist/<id>"
+  const urlMatch = value.match(/playlist\/([A-Za-z0-9]+)\/?$/);
+  if (urlMatch) return urlMatch[1];
+
+  // Já deve ser o ID puro nesse ponto; remove barra final se houver.
+  value = value.replace(/\/$/, "");
+  return value || null;
+}
+
+/**
  * Lê as playlists permitidas a partir de variáveis de ambiente individuais
  * (PLAYLIST_1_ID..PLAYLIST_4_ID). Ignora valores vazios/ausentes, então
- * funciona mesmo que só 1, 2 ou 3 estejam preenchidas. Deduplica IDs.
+ * funciona mesmo que só 1, 2 ou 3 estejam preenchidas. Normaliza cada valor
+ * (aceita ID puro, URI ou link de compartilhamento) e deduplica.
  */
 function getAllowedPlaylistIds() {
   const envNames = ["PLAYLIST_1_ID", "PLAYLIST_2_ID", "PLAYLIST_3_ID", "PLAYLIST_4_ID"];
   const ids = envNames
-    .map((name) => process.env[name])
-    .filter((value) => typeof value === "string" && value.trim().length > 0)
-    .map((value) => value.trim());
+    .map((name) => normalizePlaylistId(process.env[name]))
+    .filter((value) => Boolean(value));
 
   return Array.from(new Set(ids));
 }
